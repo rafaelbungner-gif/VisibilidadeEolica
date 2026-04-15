@@ -5,7 +5,7 @@ import streamlit.components.v1 as components
 st.set_page_config(layout="wide", page_title="Dashboard Eólica")
 
 # Lê o arquivo HTML que criamos
-with open("cvisibilidade.html", "r", encoding="utf-8") as f:
+with open("visibilidade.html", "r", encoding="utf-8") as f:
     html_code = f.read()
 
 # Renderiza o HTML dentro do Streamlit (ajuste a altura conforme necessário)
