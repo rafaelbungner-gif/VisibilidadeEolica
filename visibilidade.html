@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard: Impacto Visual Offshore</title>
+    <style>
+        :root {
+            --bg-color: #f4f7f6;
+            --panel-bg: #ffffff;
+            --text-main: #333333;
+            --border-color: #e0e0e0;
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 20px;
+        }
+        .panel {
+            background-color: var(--panel-bg);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        h2 {
+            margin-top: 0;
+            color: var(--primary);
+            font-size: 1.2rem;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        .control-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        input[type="range"] {
+            width: 100%;
+            margin-bottom: 5px;
+        }
+        select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        /* Output Dashboard */
+        .status-banner {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: white;
+            transition: background-color 0.3s ease;
+        }
+        .status-ok { background-color: var(--success); }
+        .status-warning { background-color: var(--warning); }
+        .status-critical { background-color: var(--danger); }
+        
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .metric-card {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+        .metric-card h3 {
+            margin: 0;
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            text-transform: uppercase;
+        }
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin: 10px 0 0 0;
+        }
+        .prob-bar-container {
+            width: 100%;
+            background-color: #ddd;
+            border-radius: 4px;
+            height: 10px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        .prob-bar {
+            height: 100%;
+            background-color: var(--accent);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="panel">
+            <h2>Parâmetros do Modelo</h2>
+            
+            <div class="control-group">
+                <label>Distância Turbina (km) <span id="val_dist_turbina">15</span></label>
+                <input type="range" id="dist_turbina" min="1" max="50" step="0.5" value="15" oninput="updateVal('dist_turbina'); calc()">
+            </div>
+            
+            <div class="control-group">
+                <label>Distância Centro Parque (km) <span id="val_dist_centro">17</span></label>
+                <input type="range" id="dist_centro" min="1" max="60" step="0.5" value="17" oninput="updateVal('dist_centro'); calc()">
+            </div>
+
+            <div class="control-group">
+                <label>Elevação Observador (m) <span id="val_h_obs">2</span></label>
+                <input type="range" id="h_obs" min="0" max="100" step="1" value="2" oninput="updateVal('h_obs'); calc()">
+            </div>
+
+            <div class="control-group">
+                <label>Altura Turbina (m) <span id="val_h_turbina">260</span></label>
+                <input type="range" id="h_turbina" min="50" max="400" step="5" value="260" oninput="updateVal('h_turbina'); calc()">
+            </div>
+
+            <div class="control-group">
+                <label>Área Transversal Sólida (m²) <span id="val_area">1500</span></label>
+                <input type="range" id="area" min="100" max="3000" step="50" value="1500" oninput="updateVal('area'); calc()">
+            </div>
+
+            <div class="control-group">
+                <label>Largura do Parque (km) <span id="val_largura">8</span></label>
+                <input type="range" id="largura" min="1" max="40" step="1" value="8" oninput="updateVal('largura'); calc()">
+            </div>
+
+            <div class="control-group">
+                <label>Contraste Inicial (%) <span id="val_c_i">35</span></label>
+                <input type="range" id="c_i" min="5" max="100" step="1" value="35" oninput="updateVal('c_i'); calc()">
+            </div>
+
+            <div class="control-group">
+                <label>Refração Atmosférica (k)</label>
+                <select id="k" onchange="calc()">
+                    <option value="1.00">1.00 (Sem refração)</option>
+                    <option value="1.13" selected>1.13 (Padrão Terrestre/Misto)</option>
+                    <option value="1.33">1.33 (Alta Refração/Radar)</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label>Extinção Atmosférica (β)</label>
+                <select id="beta" onchange="calc()">
+                    <option value="0.00000">0.00000 (Luz Perfeita / Vácuo)</option>
+                    <option value="0.00004">0.00004 (Ar Muito Limpo)</option>
+                    <option value="0.00008" selected>0.00008 (Névoa Leve)</option>
+                    <option value="0.00012">0.00012 (Névoa Densa Costeira)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div id="status-banner" class="status-banner status-ok">
+                STATUS: VISÍVEL
+            </div>
+
+            <div id="results-container" class="results-grid">
+                
+                <div class="metric-card">
+                    <h3>Prob. Detecção</h3>
+                    <div class="metric-value" id="out_prob">0%</div>
+                    <div class="prob-bar-container">
+                        <div class="prob-bar" id="prob-bar"></div>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <h3>Altura Visível</h3>
+                    <div class="metric-value" id="out_h_vis">0 m</div>
+                </div>
+
+                <div class="metric-card">
+                    <h3>Ocupação Horizontal (α)</h3>
+                    <div class="metric-value" id="out_alpha">0°</div>
+                </div>
+
+                <div class="metric-card">
+                    <h3>Ocupação Vertical (θ)</h3>
+                    <div class="metric-value" id="out_theta">0°</div>
+                </div>
+
+                <div class="metric-card">
+                    <h3>Contraste Residual</h3>
+                    <div class="metric-value" id="out_cd">0%</div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Atualiza os labels dos sliders
+        function updateVal(id) {
+            document.getElementById('val_' + id).innerText = document.getElementById(id).value;
+        }
+
+        // Lógica Principal de Cálculo em Cascata
+        function calc() {
+            // Leitura e Conversão de Inputs
+            const dist_turbina_m = parseFloat(document.getElementById('dist_turbina').value) * 1000;
+            const dist_centro_m = parseFloat(document.getElementById('dist_centro').value) * 1000;
+            const h_obs = parseFloat(document.getElementById('h_obs').value);
+            const h_turbina = parseFloat(document.getElementById('h_turbina').value);
+            const area = parseFloat(document.getElementById('area').value);
+            const largura_m = parseFloat(document.getElementById('largura').value) * 1000;
+            const c_i = parseFloat(document.getElementById('c_i').value);
+            const k = parseFloat(document.getElementById('k').value);
+            const beta = parseFloat(document.getElementById('beta').value);
+
+            const R_terra = 6371000;
+            const statusBanner = document.getElementById('status-banner');
+            const resultsContainer = document.getElementById('results-container');
+
+            // 1. PASSO TOPOGRÁFICO
+            const horizonte_obs = Math.sqrt(2 * k * R_terra * h_obs);
+            let h_oculta = 0;
+            if (dist_turbina_m > horizonte_obs) {
+                h_oculta = Math.pow(dist_turbina_m - horizonte_obs, 2) / (2 * R_terra * k);
+            }
+            const h_visivel = Math.max(0, h_turbina - h_oculta);
+
+            if (h_visivel <= 0) {
+                statusBanner.className = 'status-banner status-critical';
+                statusBanner.innerText = 'STATUS: 100% OCULTO PELA CURVATURA DA TERRA';
+                resultsContainer.style.opacity = '0.3';
+                updateMetrics(0, 0, 0, 0, 0);
+                return;
+            }
+
+            // 2. PASSO ATMOSFÉRICO
+            const c_d = c_i * Math.exp(-beta * dist_turbina_m);
+
+            if (c_d < 2.0) {
+                statusBanner.className = 'status-banner status-warning';
+                statusBanner.innerText = `STATUS: INVISÍVEL - APAGADO PELA NÉVOA (Contraste: ${c_d.toFixed(1)}%)`;
+                resultsContainer.style.opacity = '0.3';
+                updateMetrics(0, h_visivel, 0, 0, c_d);
+                return;
+            }
+
+            // 3. PASSO GEOMÉTRICO (SVIA)
+            const alpha_rad = 2 * Math.atan(largura_m / (2 * dist_centro_m));
+            const alpha = alpha_rad * (180 / Math.PI);
+            
+            const theta_rad = Math.atan(h_visivel / dist_turbina_m);
+            const theta = theta_rad * (180 / Math.PI);
+
+            // 4. PASSO PROBABILÍSTICO (Bishop)
+            const M = area * 1.2;
+            const angulo_minutos = Math.atan(1 / dist_turbina_m) * (180 / Math.PI) * 60;
+            const S = M * Math.pow(angulo_minutos, 2);
+            
+            const Z_ud = -16.02 + 0.0124 * (c_d * S) + 12.75;
+            const prob = (1 / (1 + Math.exp(-Z_ud))) * 100;
+
+            // Renderizar Sucesso
+            statusBanner.className = 'status-banner status-ok';
+            statusBanner.innerText = 'STATUS: VISÍVEL NO HORIZONTE';
+            resultsContainer.style.opacity = '1';
+            updateMetrics(prob, h_visivel, alpha, theta, c_d);
+        }
+
+        // Atualiza a Interface de Usuário
+        function updateMetrics(prob, h_vis, alpha, theta, cd) {
+            document.getElementById('out_prob').innerText = prob.toFixed(1) + '%';
+            document.getElementById('prob-bar').style.width = prob + '%';
+            document.getElementById('out_h_vis').innerText = h_vis.toFixed(1) + ' m';
+            document.getElementById('out_alpha').innerText = alpha.toFixed(2) + '°';
+            document.getElementById('out_theta').innerText = theta.toFixed(3) + '°';
+            document.getElementById('out_cd').innerText = cd.toFixed(1) + '%';
+        }
+
+        // Executar primeiro cálculo ao carregar a página
+        window.onload = calc;
+    </script>
+
+</body>
+</html>
