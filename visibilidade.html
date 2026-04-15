@@ -3,22 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard: Impacto Visual Offshore</title>
+    <title>Dashboard Unificado: Impacto Visual Offshore</title>
+    
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
     <style>
         :root {
-            --bg-color: #f4f7f6;
-            --panel-bg: #ffffff;
-            --text-main: #333333;
-            --border-color: #e0e0e0;
-            --primary: #2c3e50;
-            --accent: #3498db;
-            --success: #27ae60;
-            --warning: #f39c12;
-            --danger: #e74c3c;
+            --bg-page: #121214;
+            --bg-panel: #202024;
+            --text-main: #e1e1e6;
+            --text-muted: #8d8d99;
+            --border: #323238;
+            --accent: #8257e5;
+            --accent-light: #996dff;
+            --blue: #4dabf7;
+            --success: #04d361;
+            --danger: #f75a68;
+            --warning: #fba94c;
         }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
+            font-family: 'Inter', -apple-system, sans-serif;
+            background-color: var(--bg-page);
             color: var(--text-main);
             margin: 0;
             padding: 20px;
@@ -26,283 +33,663 @@
             flex-direction: column;
             align-items: center;
         }
+
         .container {
             width: 100%;
-            max-width: 1200px;
-            display: grid;
-            grid-template-columns: 350px 1fr;
+            max-width: 1400px;
+            display: flex;
+            flex-direction: column;
             gap: 20px;
         }
-        .panel {
-            background-color: var(--panel-bg);
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+
+        /* ESTILOS DO DASHBOARD INTERATIVO */
+        .dashboard-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
-        h2 {
-            margin-top: 0;
-            color: var(--primary);
-            font-size: 1.2rem;
-            border-bottom: 2px solid var(--border-color);
-            padding-bottom: 10px;
-        }
-        .control-group {
-            margin-bottom: 15px;
-        }
-        label {
+
+        .header {
             display: flex;
             justify-content: space-between;
-            font-size: 0.9rem;
-            font-weight: bold;
-            margin-bottom: 5px;
+            align-items: center;
+            background-color: var(--bg-panel);
+            padding: 20px 30px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
         }
-        input[type="range"] {
-            width: 100%;
-            margin-bottom: 5px;
-        }
-        select {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            font-size: 0.9rem;
-        }
-        /* Output Dashboard */
-        .status-banner {
-            padding: 20px;
-            border-radius: 8px;
-            text-align: center;
-            font-weight: bold;
-            font-size: 1.2rem;
-            margin-bottom: 20px;
-            color: white;
-            transition: background-color 0.3s ease;
-        }
-        .status-ok { background-color: var(--success); }
-        .status-warning { background-color: var(--warning); }
-        .status-critical { background-color: var(--danger); }
-        
-        .results-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-        }
-        .metric-card {
-            background: var(--bg-color);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 15px;
-            text-align: center;
-        }
-        .metric-card h3 {
+
+        .header h1 {
             margin: 0;
-            font-size: 0.9rem;
-            color: #7f8c8d;
-            text-transform: uppercase;
+            font-size: 1.5rem;
+            font-weight: 600;
         }
-        .metric-value {
-            font-size: 2rem;
+
+        .metrics-row {
+            display: flex;
+            gap: 30px;
+        }
+
+        .metric {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .metric span {
+            font-size: 0.75rem;
+            color: var(--text-muted);
             font-weight: bold;
-            color: var(--primary);
-            margin: 10px 0 0 0;
+            letter-spacing: 1px;
         }
-        .prob-bar-container {
-            width: 100%;
-            background-color: #ddd;
+
+        .metric strong {
+            font-size: 1.5rem;
+            color: var(--blue);
+        }
+
+        .visual-displays {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .canvas-container {
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        .canvas-title {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+        }
+
+        canvas { max-width: 100%; height: auto; }
+
+        .controls-grid {
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .control-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .control-header label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        input[type="number"] {
+            background-color: #29292e;
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            padding: 4px 8px;
             border-radius: 4px;
-            height: 10px;
-            margin-top: 10px;
-            overflow: hidden;
+            font-size: 0.85rem;
+            font-family: monospace;
+            font-weight: bold;
+            width: 70px;
+            text-align: right;
+            outline: none;
         }
-        .prob-bar {
-            height: 100%;
-            background-color: var(--accent);
-            width: 0%;
-            transition: width 0.3s ease;
+        
+        input[type="number"]:focus { border-color: var(--blue); }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            outline: none;
         }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--blue);
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            background: var(--accent-light);
+        }
+
+        select {
+            background-color: #29292e;
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            outline: none;
+        }
+
+        /* ESTILOS DA DOCUMENTAÇÃO TÉCNICA */
+        .doc-section {
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 40px;
+            margin-top: 20px;
+            line-height: 1.6;
+        }
+
+        .doc-section h2 {
+            color: var(--accent-light);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+
+        .doc-section h3 {
+            color: var(--blue);
+            margin-top: 30px;
+        }
+
+        .doc-section p, .doc-section li {
+            color: #c4c4cc;
+            font-size: 0.95rem;
+        }
+
+        .doc-card {
+            background-color: #29292e;
+            border-left: 4px solid var(--blue);
+            padding: 15px 20px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .math-box {
+            overflow-x: auto;
+            padding: 10px 0;
+        }
+
+        code {
+            background-color: #121214;
+            color: #fba94c;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+
+        pre {
+            background-color: #121214;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            border: 1px solid var(--border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 10px;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.9rem;
+        }
+
+        th { color: var(--text-main); }
+        td { color: #c4c4cc; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <div class="panel">
-            <h2>Parâmetros do Modelo</h2>
-            
-            <div class="control-group">
-                <label>Distância Turbina (km) <span id="val_dist_turbina">15</span></label>
-                <input type="range" id="dist_turbina" min="1" max="50" step="0.5" value="15" oninput="updateVal('dist_turbina'); calc()">
-            </div>
-            
-            <div class="control-group">
-                <label>Distância Centro Parque (km) <span id="val_dist_centro">17</span></label>
-                <input type="range" id="dist_centro" min="1" max="60" step="0.5" value="17" oninput="updateVal('dist_centro'); calc()">
-            </div>
-
-            <div class="control-group">
-                <label>Elevação Observador (m) <span id="val_h_obs">2</span></label>
-                <input type="range" id="h_obs" min="0" max="100" step="1" value="2" oninput="updateVal('h_obs'); calc()">
-            </div>
-
-            <div class="control-group">
-                <label>Altura Turbina (m) <span id="val_h_turbina">260</span></label>
-                <input type="range" id="h_turbina" min="50" max="400" step="5" value="260" oninput="updateVal('h_turbina'); calc()">
-            </div>
-
-            <div class="control-group">
-                <label>Área Transversal Sólida (m²) <span id="val_area">1500</span></label>
-                <input type="range" id="area" min="100" max="3000" step="50" value="1500" oninput="updateVal('area'); calc()">
-            </div>
-
-            <div class="control-group">
-                <label>Largura do Parque (km) <span id="val_largura">8</span></label>
-                <input type="range" id="largura" min="1" max="40" step="1" value="8" oninput="updateVal('largura'); calc()">
-            </div>
-
-            <div class="control-group">
-                <label>Contraste Inicial (%) <span id="val_c_i">35</span></label>
-                <input type="range" id="c_i" min="5" max="100" step="1" value="35" oninput="updateVal('c_i'); calc()">
-            </div>
-
-            <div class="control-group">
-                <label>Refração Atmosférica (k)</label>
-                <select id="k" onchange="calc()">
-                    <option value="1.00">1.00 (Sem refração)</option>
-                    <option value="1.13" selected>1.13 (Padrão Terrestre/Misto)</option>
-                    <option value="1.33">1.33 (Alta Refração/Radar)</option>
-                </select>
-            </div>
-
-            <div class="control-group">
-                <label>Extinção Atmosférica (β)</label>
-                <select id="beta" onchange="calc()">
-                    <option value="0.00000">0.00000 (Luz Perfeita / Vácuo)</option>
-                    <option value="0.00004">0.00004 (Ar Muito Limpo)</option>
-                    <option value="0.00008" selected>0.00008 (Névoa Leve)</option>
-                    <option value="0.00012">0.00012 (Névoa Densa Costeira)</option>
-                </select>
-            </div>
-        </div>
-
-        <div class="panel">
-            <div id="status-banner" class="status-banner status-ok">
-                STATUS: VISÍVEL
-            </div>
-
-            <div id="results-container" class="results-grid">
-                
-                <div class="metric-card">
-                    <h3>Prob. Detecção</h3>
-                    <div class="metric-value" id="out_prob">0%</div>
-                    <div class="prob-bar-container">
-                        <div class="prob-bar" id="prob-bar"></div>
+        
+        <div class="dashboard-section">
+            <div class="header">
+                <h1>Impacto Visual: Eólicas Offshore</h1>
+                <div class="metrics-row">
+                    <div class="metric">
+                        <span>OCULTO (M)</span>
+                        <strong id="out_oculto" style="color: var(--danger);">0.0</strong>
+                    </div>
+                    <div class="metric">
+                        <span>VISÍVEL (M)</span>
+                        <strong id="out_visivel" style="color: var(--success);">260.0</strong>
+                    </div>
+                    <div class="metric">
+                        <span>OCUP. HORIZONTAL</span>
+                        <strong id="out_alpha">0.0°</strong>
+                    </div>
+                    <div class="metric">
+                        <span>PROB. DETECÇÃO</span>
+                        <strong id="out_prob" style="color: var(--accent-light);">0.0%</strong>
                     </div>
                 </div>
+            </div>
 
-                <div class="metric-card">
-                    <h3>Altura Visível</h3>
-                    <div class="metric-value" id="out_h_vis">0 m</div>
+            <div class="visual-displays">
+                <div class="canvas-container">
+                    <div class="canvas-title">CAMPO DE VISÃO PERIFÉRICO (180°)</div>
+                    <canvas id="fov-canvas" width="600" height="350"></canvas>
+                </div>
+                <div class="canvas-container">
+                    <div class="canvas-title">PERFIL LATERAL (CURVATURA DA TERRA)</div>
+                    <canvas id="profile-canvas" width="600" height="350"></canvas>
+                </div>
+            </div>
+
+            <div class="controls-grid">
+                <div class="control-group">
+                    <div class="control-header">
+                        <label>Distância até Costa (km)</label>
+                        <input type="number" id="num_dist" value="15" step="0.5" oninput="sync('num_dist', 'dist')">
+                    </div>
+                    <input type="range" id="dist" min="1" max="60" step="0.5" value="15" oninput="sync('dist', 'num_dist')">
+                </div>
+                
+                <div class="control-group">
+                    <div class="control-header">
+                        <label>Largura do Parque (km)</label>
+                        <input type="number" id="num_largura" value="10" step="0.5" oninput="sync('num_largura', 'largura')">
+                    </div>
+                    <input type="range" id="largura" min="1" max="40" step="0.5" value="10" oninput="sync('largura', 'num_largura')">
                 </div>
 
-                <div class="metric-card">
-                    <h3>Ocupação Horizontal (α)</h3>
-                    <div class="metric-value" id="out_alpha">0°</div>
+                <div class="control-group">
+                    <div class="control-header">
+                        <label>Altura da Turbina (m)</label>
+                        <input type="number" id="num_h_turbina" value="260" step="1" oninput="sync('num_h_turbina', 'h_turbina')">
+                    </div>
+                    <input type="range" id="h_turbina" min="50" max="400" step="1" value="260" oninput="sync('h_turbina', 'num_h_turbina')">
                 </div>
 
-                <div class="metric-card">
-                    <h3>Ocupação Vertical (θ)</h3>
-                    <div class="metric-value" id="out_theta">0°</div>
+                <div class="control-group">
+                    <div class="control-header">
+                        <label>Elevação do Observador (m)</label>
+                        <input type="number" id="num_h_obs" value="2" step="0.1" oninput="sync('num_h_obs', 'h_obs')">
+                    </div>
+                    <input type="range" id="h_obs" min="0" max="150" step="0.1" value="2" oninput="sync('h_obs', 'num_h_obs')">
                 </div>
 
-                <div class="metric-card">
-                    <h3>Contraste Residual</h3>
-                    <div class="metric-value" id="out_cd">0%</div>
+                <div class="control-group">
+                    <div class="control-header">
+                        <label>Área Sólida Transversal (m²)</label>
+                        <input type="number" id="num_area" value="1500" step="10" oninput="sync('num_area', 'area')">
+                    </div>
+                    <input type="range" id="area" min="500" max="3000" step="10" value="1500" oninput="sync('area', 'num_area')">
                 </div>
 
+                <div class="control-group">
+                    <div class="control-header">
+                        <label>Contraste Inicial (%)</label>
+                        <input type="number" id="num_ci" value="35" step="1" oninput="sync('num_ci', 'ci')">
+                    </div>
+                    <input type="range" id="ci" min="5" max="100" step="1" value="35" oninput="sync('ci', 'num_ci')">
+                </div>
+
+                <div class="control-group">
+                    <div class="control-header">
+                        <label>Coeficiente de Refração (k)</label>
+                    </div>
+                    <select id="k" onchange="calc()">
+                        <option value="1.00">1.00 (Geometria Pura)</option>
+                        <option value="1.13" selected>1.13 (Padrão/Marinho)</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <div class="control-header">
+                        <label>Condição Atmosférica (β)</label>
+                    </div>
+                    <select id="beta" onchange="calc()">
+                        <option value="0.00000">Ar Perfeito (Luz sem dispersão)</option>
+                        <option value="0.00004">Ar Limpo</option>
+                        <option value="0.00008" selected>Névoa Leve</option>
+                        <option value="0.00012">Névoa Densa / Umidade</option>
+                    </select>
+                </div>
             </div>
         </div>
+
+        <div class="doc-section">
+            <h2>Memorial de Cálculo e Referências</h2>
+            <p>O modelo matemático deste painel processa a intervisibilidade através de uma cascata lógica de três etapas: Topografia (eixo Z), Magnitude Paisagística (eixo X) e Dissolução Atmosférica (Opacidade).</p>
+
+            <h3>1. Filtragem Topográfica (Curvatura da Terra e Refração)</h3>
+            <p>Define o limite físico da linha de visão. Calcula a parcela da estrutura que desaparece atrás da curvatura do planeta antes que a luz alcance o observador.</p>
+            <div class="doc-card">
+                <div class="math-box">
+                    \[ d_{obs} = \sqrt{2 \cdot k \cdot R \cdot h_{obs}} \]
+                    \[ h_{oculta} = \frac{(d - d_{obs})^2}{2 \cdot R \cdot k} \]
+                    \[ h_{visivel} = \max(0, h_{turbina} - h_{oculta}) \]
+                </div>
+                <p><strong>Referência:</strong> NatureScot (2017). <em>Visual Representation of Wind Farms: Best Practice Guidance</em>.</p>
+            </div>
+
+            <h3>2. Magnitude Paisagística (Ocupação Angular SVIA)</h3>
+            <p>Se a estrutura desponta no horizonte (\( h_{visivel} > 0 \)), calcula-se a intrusão espacial geométrica que o parque causa no panorama de 180° do observador.</p>
+            <div class="doc-card">
+                <div class="math-box">
+                    \[ \alpha = 2 \cdot \arctan \left( \frac{W}{2 \cdot d} \right) \cdot \left( \frac{180}{\pi} \right) \]
+                    \[ \theta = \arctan \left( \frac{h_{visivel}}{d} \right) \cdot \left( \frac{180}{\pi} \right) \]
+                </div>
+                <p><strong>Referência:</strong> Manchado, C. et al. (2017). <em>Method to estimate the visual impact of an offshore wind farm</em>.</p>
+            </div>
+
+            <h3>3. Dissolução Atmosférica e Probabilidade Visual</h3>
+            <p>Calcula a degradação da luz pela névoa marinha e o limiar de detecção da retina humana através do fator linear-logit.</p>
+            <div class="doc-card">
+                <div class="math-box">
+                    \[ S = M \cdot \left[ \arctan\left(\frac{1}{d}\right) \cdot 60 \right]^2 \]
+                    \[ C_d = C_i \cdot \exp(-\beta \cdot d) \]
+                    \[ Z_{ud} = -16,02 + 0,0124(C_d \cdot S) + 12,75 \]
+                    \[ Prob_{detec\text{ç}\tilde{a}o} = \frac{1}{1 + \exp(-Z_{ud})} \cdot 100 \]
+                </div>
+                <p><strong>Referência:</strong> Bishop, I. D. (2002). <em>Determination of thresholds of visual impact: the case of wind turbines</em>.</p>
+            </div>
+
+            <h3>4. Justificativa dos Parâmetros Adotados (\( k \) e \( \beta \))</h3>
+            <p>Os coeficientes selecionáveis no painel não são arbitrários; eles derivam da óptica física e de manuais de geoprocessamento oficiais.</p>
+            
+            <div class="doc-card">
+                <h4>Coeficiente de Refração Atmosférica (\( k \))</h4>
+                <p>A luz não viaja em linha reta perfeita na atmosfera; ela se curva levemente para baixo acompanhando a curvatura da Terra devido a gradientes de densidade térmica. O coeficiente \( k \) atua como um multiplicador para gerar um "Raio Efetivo da Terra".</p>
+                <ul>
+                    <li><strong>\( k = 1.00 \):</strong> Ausência de refração. Assume a geometria rígida do planeta no vácuo.</li>
+                    <li><strong>\( k = 1.13 \):</strong> Refração Visual Padrão. Este é o valor formalmente exigido pelas diretrizes internacionais (<strong>NatureScot, 2017</strong>) para elaboração de mapas ZTV (Zona de Visibilidade Teórica). Ele garante que o modelo leve em conta que objetos ligeiramente "atrás" do horizonte físico ainda podem ser vistos.</li>
+                </ul>
+            </div>
+
+            <div class="doc-card">
+                <h4>Coeficiente de Extinção Atmosférica (\( \beta \))</h4>
+                <p>A atenuação do contraste (\( C_d \)) pelo ar baseia-se na <strong>Lei de Koschmieder (1924)</strong>, que relaciona o contraste visual com a visibilidade meteorológica (\( V = 3.912 / \beta \)). Os valores disponibilizados no seletor representam:</p>
+                <ul>
+                    <li><strong>\( \beta = 0.00004 \) (Ar Limpo):</strong> Corresponde a uma visibilidade meteorológica de aproximadamente 97 km. Dias excepcionalmente claros.</li>
+                    <li><strong>\( \beta = 0.00008 \) (Névoa Leve):</strong> Valor empírico exato adotado no estudo base de <strong>Bishop (2002)</strong>. Bishop extraiu este coeficiente matematicamente fotografando colinas a 60 km de distância e medindo o contraste dos pixels. É o padrão conservador recomendado para avaliações de impacto contínuas. Corresponde a uma visibilidade visual humana de ~48 km.</li>
+                    <li><strong>\( \beta = 0.00012 \) (Névoa Densa / Maresia):</strong> Corresponde a uma visibilidade de ~32 km. Umidade atmosférica pesada comum em mares e regiões costeiras tropicais logo acima da lâmina d'água.</li>
+                </ul>
+            </div>
+
+            <h3>5. Dicionário de Variáveis (Inputs e Outputs)</h3>
+            <table>
+                <tr><th>Símbolo</th><th>Unidade</th><th>Descrição</th></tr>
+                <tr><td>\( d \)</td><td>m</td><td><strong>Distância até a costa:</strong> Distância real entre o observador e o aerogerador mais próximo.</td></tr>
+                <tr><td>\( h_{obs} \)</td><td>m</td><td><strong>Elevação do Observador:</strong> Altura dos olhos em relação ao nível do mar (ex: 2m = praia).</td></tr>
+                <tr><td>\( h_{turbina} \)</td><td>m</td><td><strong>Altura da Turbina:</strong> Altura máxima da torre mais o raio da pá na posição mais alta.</td></tr>
+                <tr><td>\( R \)</td><td>m</td><td><strong>Raio da Terra:</strong> Constante padrão de 6.371.000 metros.</td></tr>
+                <tr><td>\( k \)</td><td>-</td><td><strong>Coeficiente de Refração:</strong> Compensa a curva que a luz faz na atmosfera.</td></tr>
+                <tr><td>\( W \)</td><td>m</td><td><strong>Largura do Parque:</strong> Extensão lateral de todo o polígono do complexo eólico.</td></tr>
+                <tr><td>\( M \)</td><td>m²</td><td><strong>Área Transversal Percebida:</strong> O algoritmo multiplica a entrada de área bruta do usuário por 1.2 (+20%) para compensar a ilusão ótica do giro veloz das pás (Bishop, 2002).</td></tr>
+                <tr><td>\( C_i \)</td><td>%</td><td><strong>Contraste Inicial:</strong> Diferença de luminosidade inicial entre a torre e o fundo marinho/céu.</td></tr>
+                <tr><td>\( \beta \)</td><td>-</td><td><strong>Coeficiente de Extinção Atmosférica:</strong> Taxa de dispersão da luz (névoa).</td></tr>
+                <tr><td>\( h_{oculta} \)</td><td>m</td><td><em>Output:</em> Metragem da torre afundada sob o horizonte geométrico/refratado.</td></tr>
+                <tr><td>\( \alpha \) / \( \theta \)</td><td>Graus (°)</td><td><em>Output:</em> Ângulos de abertura SVIA. \(\alpha\) (Alfa) = largura visual; \(\theta\) (Teta) = altura visual.</td></tr>
+            </table>
+
+            <h3>6. Guia para Desenvolvedores (Modificando este HTML)</h3>
+            <p>Este painel foi construído em HTML5, CSS3 e Javascript puro (Vanilla) para máxima portabilidade. Veja como adaptá-lo:</p>
+            <ul>
+                <li><strong>Alterar o Tema de Cores:</strong> Vá até a tag <code>&lt;style&gt;</code> no início do arquivo. Altere as variáveis hexadecimais no bloco <code>:root { ... }</code>.</li>
+                <li><strong>Mudar os Valores Padrão ao Abrir:</strong> No bloco HTML <code>&lt;div class="controls-grid"&gt;</code>, encontre as tags de <code>input</code> (tanto <code>type="number"</code> quanto <code>type="range"</code>) e altere o atributo <code>value="X"</code> para o número desejado.</li>
+                <li><strong>Modificar as Limitações de Slider:</strong> Nas mesmas tags de input, altere os atributos <code>min</code>, <code>max</code> e <code>step</code>. (ex: para permitir parques maiores, mude <code>max="40"</code> para <code>max="100"</code>).</li>
+                <li><strong>Ajustar a Lógica Matemática:</strong> Toda a álgebra está processada na função <code>calc()</code> dentro da tag <code>&lt;script&gt;</code> no final do documento.</li>
+            </ul>
+        </div>
+
     </div>
 
     <script>
-        // Atualiza os labels dos sliders
-        function updateVal(id) {
-            document.getElementById('val_' + id).innerText = document.getElementById(id).value;
+        // Sincroniza o Slider com o Input Numérico e vice-versa
+        function sync(sourceId, targetId) {
+            document.getElementById(targetId).value = document.getElementById(sourceId).value;
+            calc();
         }
 
-        // Lógica Principal de Cálculo em Cascata
+        // Desenha Radar Top-Down
+        function drawFOV(alpha, isVisible) {
+            const canvas = document.getElementById('fov-canvas');
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+            const cx = w / 2;
+            const cy = h - 50;
+            const radius = cy - 60;
+
+            ctx.clearRect(0, 0, w, h);
+
+            // Horizonte Base
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius, Math.PI, 0);
+            ctx.setLineDash([5, 5]);
+            ctx.strokeStyle = '#323238';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Observador
+            ctx.fillStyle = '#e1e1e6';
+            ctx.beginPath();
+            ctx.arc(cx, cy + 5, 8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillRect(cx - 12, cy + 15, 24, 6);
+
+            if (alpha > 0 && isVisible) {
+                const aRad = alpha * Math.PI / 180;
+                const start = 1.5 * Math.PI - (aRad / 2);
+                const end = 1.5 * Math.PI + (aRad / 2);
+
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.arc(cx, cy, radius, start, end);
+                ctx.closePath();
+                ctx.fillStyle = 'rgba(77, 171, 247, 0.15)';
+                ctx.fill();
+                ctx.strokeStyle = '#4dabf7';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Tag Ângulo
+                ctx.fillStyle = '#202024';
+                ctx.strokeStyle = '#4dabf7';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.roundRect(cx - 80, cy - radius - 35, 160, 26, 13);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.fillStyle = '#e1e1e6';
+                ctx.font = 'bold 11px Inter';
+                ctx.textAlign = 'center';
+                ctx.fillText(`LARGURA ANGULAR: ${alpha.toFixed(1)}°`, cx, cy - radius - 18);
+            } else if (!isVisible) {
+                ctx.fillStyle = '#f75a68';
+                ctx.font = 'bold 14px Inter';
+                ctx.textAlign = 'center';
+                ctx.fillText('INVISÍVEL (OCULTO OU APAGADO PELA NÉVOA)', cx, cy - radius/2);
+            }
+        }
+
+        // Desenha Curvatura
+        function drawProfile(dist_km, h_turbina, h_oculta, h_visivel, isVisible) {
+            const canvas = document.getElementById('profile-canvas');
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+            
+            ctx.clearRect(0, 0, w, h);
+
+            const padX = 60;
+            const startX = padX;
+            const endX = w - padX;
+            const baseY = h - 60; 
+
+            const scaleY = 150 / h_turbina; 
+            const ocultaY = baseY + (h_oculta * scaleY);
+
+            // Linha Visada
+            ctx.beginPath();
+            ctx.moveTo(startX, baseY);
+            ctx.lineTo(endX, baseY);
+            ctx.strokeStyle = '#4dabf7';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([4, 4]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            ctx.fillStyle = '#4dabf7';
+            ctx.font = '10px Inter';
+            ctx.textAlign = 'left';
+            ctx.fillText('Linha de Visão do Observador', startX + 15, baseY - 5);
+
+            ctx.lineWidth = 4;
+            
+            // Turbina Visível
+            if (h_visivel > 0) {
+                ctx.beginPath();
+                ctx.moveTo(endX, baseY);
+                ctx.lineTo(endX, baseY - (h_visivel * scaleY));
+                ctx.strokeStyle = '#04d361'; 
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.arc(endX, baseY - (h_visivel * scaleY), 12, 0, Math.PI * 2);
+                ctx.fillStyle = '#04d361';
+                ctx.fill();
+            }
+
+            // Turbina Oculta
+            if (h_oculta > 0) {
+                ctx.beginPath();
+                ctx.moveTo(endX, baseY);
+                ctx.lineTo(endX, ocultaY);
+                ctx.strokeStyle = '#f75a68'; 
+                ctx.stroke();
+            }
+
+            // Mar
+            ctx.beginPath();
+            ctx.moveTo(startX, baseY + 20); 
+            ctx.quadraticCurveTo((startX + endX)/2, baseY - 5, endX, ocultaY); 
+            ctx.lineTo(endX, h);
+            ctx.lineTo(startX, h);
+            ctx.closePath();
+            
+            let grad = ctx.createLinearGradient(0, baseY, 0, h);
+            grad.addColorStop(0, 'rgba(32, 32, 36, 0.9)');
+            grad.addColorStop(1, '#121214');
+            ctx.fillStyle = grad;
+            ctx.fill();
+            ctx.strokeStyle = '#323238';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Observador Lateral
+            ctx.fillStyle = '#e1e1e6';
+            ctx.beginPath();
+            ctx.arc(startX, baseY - 15, 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillRect(startX - 8, baseY - 5, 16, 25);
+
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#8d8d99';
+            ctx.fillText('Observador', startX, baseY + 40);
+            ctx.fillText(`Distância: ${dist_km} km`, (startX + endX)/2, h - 15);
+        }
+
+        // Lógica Matemática
         function calc() {
-            // Leitura e Conversão de Inputs
-            const dist_turbina_m = parseFloat(document.getElementById('dist_turbina').value) * 1000;
-            const dist_centro_m = parseFloat(document.getElementById('dist_centro').value) * 1000;
-            const h_obs = parseFloat(document.getElementById('h_obs').value);
-            const h_turbina = parseFloat(document.getElementById('h_turbina').value);
-            const area = parseFloat(document.getElementById('area').value);
-            const largura_m = parseFloat(document.getElementById('largura').value) * 1000;
-            const c_i = parseFloat(document.getElementById('c_i').value);
+            const dist = parseFloat(document.getElementById('num_dist').value);
+            const dist_m = dist * 1000;
+            const h_turbina = parseFloat(document.getElementById('num_h_turbina').value);
+            const h_obs = parseFloat(document.getElementById('num_h_obs').value);
+            const largura_m = parseFloat(document.getElementById('num_largura').value) * 1000;
+            const area = parseFloat(document.getElementById('num_area').value);
+            const ci = parseFloat(document.getElementById('num_ci').value);
             const k = parseFloat(document.getElementById('k').value);
             const beta = parseFloat(document.getElementById('beta').value);
 
             const R_terra = 6371000;
-            const statusBanner = document.getElementById('status-banner');
-            const resultsContainer = document.getElementById('results-container');
 
-            // 1. PASSO TOPOGRÁFICO
+            // PASSO 1
             const horizonte_obs = Math.sqrt(2 * k * R_terra * h_obs);
             let h_oculta = 0;
-            if (dist_turbina_m > horizonte_obs) {
-                h_oculta = Math.pow(dist_turbina_m - horizonte_obs, 2) / (2 * R_terra * k);
+            if (dist_m > horizonte_obs) {
+                h_oculta = Math.pow(dist_m - horizonte_obs, 2) / (2 * R_terra * k);
             }
-            const h_visivel = Math.max(0, h_turbina - h_oculta);
-
-            if (h_visivel <= 0) {
-                statusBanner.className = 'status-banner status-critical';
-                statusBanner.innerText = 'STATUS: 100% OCULTO PELA CURVATURA DA TERRA';
-                resultsContainer.style.opacity = '0.3';
-                updateMetrics(0, 0, 0, 0, 0);
-                return;
-            }
-
-            // 2. PASSO ATMOSFÉRICO
-            const c_d = c_i * Math.exp(-beta * dist_turbina_m);
-
-            if (c_d < 2.0) {
-                statusBanner.className = 'status-banner status-warning';
-                statusBanner.innerText = `STATUS: INVISÍVEL - APAGADO PELA NÉVOA (Contraste: ${c_d.toFixed(1)}%)`;
-                resultsContainer.style.opacity = '0.3';
-                updateMetrics(0, h_visivel, 0, 0, c_d);
-                return;
-            }
-
-            // 3. PASSO GEOMÉTRICO (SVIA)
-            const alpha_rad = 2 * Math.atan(largura_m / (2 * dist_centro_m));
-            const alpha = alpha_rad * (180 / Math.PI);
             
-            const theta_rad = Math.atan(h_visivel / dist_turbina_m);
-            const theta = theta_rad * (180 / Math.PI);
+            h_oculta = Math.min(h_oculta, h_turbina);
+            let h_visivel = Math.max(0, h_turbina - h_oculta);
 
-            // 4. PASSO PROBABILÍSTICO (Bishop)
-            const M = area * 1.2;
-            const angulo_minutos = Math.atan(1 / dist_turbina_m) * (180 / Math.PI) * 60;
-            const S = M * Math.pow(angulo_minutos, 2);
-            
-            const Z_ud = -16.02 + 0.0124 * (c_d * S) + 12.75;
-            const prob = (1 / (1 + Math.exp(-Z_ud))) * 100;
+            // PASSO 3 (Atmosfera)
+            const cd = ci * Math.exp(-beta * dist_m);
+            const atmosfera_permite = cd >= 2.0; 
+            const isVisible = (h_visivel > 0) && atmosfera_permite;
 
-            // Renderizar Sucesso
-            statusBanner.className = 'status-banner status-ok';
-            statusBanner.innerText = 'STATUS: VISÍVEL NO HORIZONTE';
-            resultsContainer.style.opacity = '1';
-            updateMetrics(prob, h_visivel, alpha, theta, c_d);
-        }
+            // PASSO 2
+            let alpha = 0;
+            if (h_visivel > 0) {
+                const alpha_rad = 2 * Math.atan(largura_m / (2 * dist_m));
+                alpha = alpha_rad * (180 / Math.PI);
+            }
 
-        // Atualiza a Interface de Usuário
-        function updateMetrics(prob, h_vis, alpha, theta, cd) {
-            document.getElementById('out_prob').innerText = prob.toFixed(1) + '%';
-            document.getElementById('prob-bar').style.width = prob + '%';
-            document.getElementById('out_h_vis').innerText = h_vis.toFixed(1) + ' m';
+            // PROBABILIDADE
+            let prob_pct = 0;
+            if (isVisible) {
+                const M = area * 1.2;
+                const angulo_minutos = Math.atan(1 / dist_m) * (180 / Math.PI) * 60;
+                const S = M * Math.pow(angulo_minutos, 2);
+                const Z_ud = -16.02 + 0.0124 * (cd * S) + 12.75;
+                const prob = 1 / (1 + Math.exp(-Z_ud));
+                prob_pct = prob * 100;
+            }
+
+            // DOM
+            document.getElementById('out_oculto').innerText = h_oculta.toFixed(1);
+            document.getElementById('out_visivel').innerText = h_visivel.toFixed(1);
             document.getElementById('out_alpha').innerText = alpha.toFixed(2) + '°';
-            document.getElementById('out_theta').innerText = theta.toFixed(3) + '°';
-            document.getElementById('out_cd').innerText = cd.toFixed(1) + '%';
+            document.getElementById('out_prob').innerText = isVisible ? prob_pct.toFixed(1) + '%' : '0.0%';
+            
+            document.getElementById('out_visivel').style.color = h_visivel > 0 ? 'var(--success)' : 'var(--danger)';
+            document.getElementById('out_prob').style.color = isVisible ? 'var(--blue)' : 'var(--danger)';
+
+            drawFOV(alpha, isVisible);
+            drawProfile(dist, h_turbina, h_oculta, h_visivel, isVisible);
         }
+
+        window.onload = calc;
+    </script>
+</body>
+</html>
 
         // Executar primeiro cálculo ao carregar a página
         window.onload = calc;
